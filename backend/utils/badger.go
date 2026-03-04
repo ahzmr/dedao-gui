@@ -270,9 +270,10 @@ func FormatKey(category string, id int) string {
 
 // GetDefaultBadgerDBPath 获取默认的 BadgerDB 路径
 func GetDefaultBadgerDBPath() string {
-	configDir, err := os.Getwd()
-	if err != nil {
-		configDir = os.TempDir()
+	// 优先使用 $HOME/.config/dedao，与 config 包保持一致
+	// 避免打包后 os.Getwd() 返回 "/" 导致路径异常
+	if home, ok := os.LookupEnv("HOME"); ok {
+		return filepath.Join(home, ".config", "dedao", ".cache", "db")
 	}
-	return filepath.Join(configDir, ".cache", "db")
+	return filepath.Join(os.TempDir(), "dedao", ".cache", "db")
 }

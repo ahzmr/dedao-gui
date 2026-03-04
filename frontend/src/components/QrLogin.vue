@@ -86,6 +86,7 @@ const getQrcode = () => {
       data.token = result.token;
       data.qrCodeString = result.qrCodeString;
       console.log(result);
+      startPolling();
     })
     .catch((error) => {
       ElMessage({
@@ -95,56 +96,56 @@ const getQrcode = () => {
     });
 };
 
-timeState.timer = window.setInterval(() => {
-  timeState.time--;
-  if (!timeState.time) {
-    timeState.time = 600;
+const startPolling = () => {
+  if (timeState.timer) {
     clearInterval(timeState.timer);
-    timeState.timer = 0;
   }
-
-  CheckLogin(data.token, data.qrCodeString).then((loginResult) => {
-    if (loginResult.status == 1 || loginResult.status == 2) {
+  timeState.time = 600;
+  timeState.timer = window.setInterval(() => {
+    timeState.time--;
+    if (!timeState.time) {
+      timeState.time = 600;
       clearInterval(timeState.timer);
       timeState.timer = 0;
-      if (loginResult.status == 1) {
-        let user = reactive(new services.User());
-        Object.assign(user, loginResult.user);
-        store.user = user;
-
-        Local.set("cookies", loginResult.cookie);
-
-        if (store.userList.length == 0) {
-          store.userList.push(user);
-        } else {
-          store.userList.forEach((item) => {
-            if (item.uid_hazy != user.uid_hazy) {
-              store.userList.push(user);
-            }
-          });
-        }
-
-        console.log(store);
-        router.push("/user/profile");
-      } else if (loginResult.status == 2) {
-        router.push("/user/login");
-      } else {
-        Local.remove("cookies");
-        Local.remove("userStore");
-      }
     }
 
-    console.log(loginResult);
-  }).catch((error)=>{
-    // ElMessage({
-    //   message: error,
-    //   type: 'warning'
-    // })
-    // Silent fail on check login errors to avoid spam
-    clearInterval(timeState.timer);
-    timeState.timer = 0;
-  });
-}, 2000);
+    CheckLogin(data.token, data.qrCodeString).then((loginResult) => {
+      if (loginResult.status == 1 || loginResult.status == 2) {
+        clearInterval(timeState.timer);
+        timeState.timer = 0;
+        if (loginResult.status == 1) {
+          let user = reactive(new services.User());
+          Object.assign(user, loginResult.user);
+          store.user = user;
+
+          Local.set("cookies", loginResult.cookie);
+
+          if (store.userList.length == 0) {
+            store.userList.push(user);
+          } else {
+            store.userList.forEach((item) => {
+              if (item.uid_hazy != user.uid_hazy) {
+                store.userList.push(user);
+              }
+            });
+          }
+
+          console.log(store);
+          router.push("/user/profile");
+        } else if (loginResult.status == 2) {
+          router.push("/user/login");
+        } else {
+          Local.remove("cookies");
+          Local.remove("userStore");
+        }
+      }
+
+      console.log(loginResult);
+    }).catch((_error) => {
+      // CheckLogin 出错时不停止轮询，避免网络抖动导致登录流程中断
+    });
+  }, 2000);
+};
 
 onBeforeUnmount(() => {
   clearInterval(timeState.timer);

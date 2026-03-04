@@ -18,7 +18,11 @@ type PdfOption struct {
 
 func (p *PdfOption) GenPdf(buf *bytes.Buffer) (err error) {
 	wkhtmltopdf.SetPath(WkToPdfDir)
-	pdfg, _ := wkhtmltopdf.NewPDFGenerator()
+	pdfg, err := wkhtmltopdf.NewPDFGenerator()
+	if err != nil {
+		err = fmt.Errorf("初始化 PDF 生成器失败（请确认 wkhtmltopdf 已安装并在设置中配置路径）: %w", err)
+		return
+	}
 	page := wkhtmltopdf.NewPageReader(buf)
 	page.FooterFontSize.Set(10)
 	page.FooterRight.Set("[page]")

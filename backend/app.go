@@ -25,11 +25,10 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) Startup(ctx context.Context) {
 	a.Ctx = ctx
+	setupCleanupOnExit()
 }
 
 func (a *App) Shutdown(ctx context.Context) {
-	// fmt.Println(a.Ctx)
-	setupCleanupOnExit()
 }
 
 func (a *App) DomReady(ctx context.Context) {
